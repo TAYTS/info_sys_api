@@ -1,2 +1,3 @@
+
 def hello():
-    return "<h1 style='color:blue'>Hello There!</h1>"
+    return "<h1 style='color:blue'>Welcome to Info System API!</h1>"
