@@ -11,8 +11,10 @@ db = SQLAlchemy()
 class Vendors(db.Model):
     __tablename__ = 'VENDORS'
     id_vendor = db.Column(db.Integer, primary_key=True)
-    password = db.Column(db.String(255), unique=True, default='')
+    password = db.Column(db.String(255), default='')
+    email = db.Column(db.String(255), unique=True, default='')
     vendor_name = db.Column(db.String(255), default='')
+    id_vendor_hash = db.Column(db.String(255), default='')
     create_timestamp = db.Column(
         TIMESTAMP, default=datetime.utcnow().replace(microsecond=0))
 
@@ -20,8 +22,10 @@ class Vendors(db.Model):
 class Users(db.Model):
     __tablename__ = 'USERS'
     id_user = db.Column(db.Integer, primary_key=True)
-    password = db.Column(db.String(255), unique=True, default='')
+    password = db.Column(db.String(255), default='')
+    email = db.Column(db.String(255), unique=True, default='')
     username = db.Column(db.String(255), default='')
+    id_user_hash = db.Column(db.String(255), default='')
     create_timestamp = db.Column(
         TIMESTAMP, default=datetime.utcnow().replace(microsecond=0))
 

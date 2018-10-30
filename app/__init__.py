@@ -27,7 +27,10 @@ def make_app(config='config.py'):
     sess.init_app(app)
 
     from app.modules import core
+    from app.modules import admin
+
     app.register_blueprint(core.module)
+    app.register_blueprint(admin.module)
 
     return app
 
