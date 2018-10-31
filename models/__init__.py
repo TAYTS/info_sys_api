@@ -1,33 +1,28 @@
 """API db models"""
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.mysql import TIMESTAMP
+from sqlalchemy.dialects.mysql import TIMESTAMP, TINYINT
+from flask_login import UserMixin
 
 from datetime import datetime
 
 db = SQLAlchemy()
 
 
-class Vendors(db.Model):
-    __tablename__ = 'VENDORS'
-    id_vendor = db.Column(db.Integer, primary_key=True)
-    password = db.Column(db.String(255), default='')
-    email = db.Column(db.String(255), unique=True, default='')
-    vendor_name = db.Column(db.String(255), default='')
-    id_vendor_hash = db.Column(db.String(255), default='')
-    create_timestamp = db.Column(
-        TIMESTAMP, default=datetime.utcnow().replace(microsecond=0))
-
-
-class Users(db.Model):
+class Users(db.Model, UserMixin):
     __tablename__ = 'USERS'
     id_user = db.Column(db.Integer, primary_key=True)
     password = db.Column(db.String(255), default='')
     email = db.Column(db.String(255), unique=True, default='')
     username = db.Column(db.String(255), default='')
-    id_user_hash = db.Column(db.String(255), default='')
+    profile_img_url = db.Column(db.String(255), default='')
+    id_user_hash = db.Column(db.String(255), unique=True, default='')
+    is_vendor = db.Column(TINYINT(1), default=0)
     create_timestamp = db.Column(
         TIMESTAMP, default=datetime.utcnow().replace(microsecond=0))
+
+    def get_id(self):
+        return self.id_user_hash
 
 
 class Items(db.Model):
