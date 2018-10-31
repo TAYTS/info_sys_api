@@ -3,7 +3,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.mysql import TIMESTAMP, TINYINT
 from flask_login import UserMixin
-
+from werkzeug.security import check_password_hash
 from datetime import datetime
 
 db = SQLAlchemy()
@@ -20,6 +20,9 @@ class Users(db.Model, UserMixin):
     is_vendor = db.Column(TINYINT(1), default=0)
     create_timestamp = db.Column(
         TIMESTAMP, default=datetime.utcnow().replace(microsecond=0))
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
     def get_id(self):
         return self.id_user_hash
