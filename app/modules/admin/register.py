@@ -125,3 +125,29 @@ def logout():
         status = 0
 
     return jsonify({'status': status})
+
+
+@login_required
+def getQRcode():
+    email = str(request.form.get('email', ''))
+
+    if not email:
+        status = 0
+        url = ''
+    else:
+        url = db.session.query(
+            Users.qrcode_url
+        ).filter(
+            Users.email == email
+        ).scalar()
+
+        if url:
+            status = 1
+        else:
+            status = -1
+            url = ''
+
+    return jsonify({
+        'url': url,
+        'status': status
+    })
