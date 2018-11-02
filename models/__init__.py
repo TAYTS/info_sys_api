@@ -15,6 +15,7 @@ class Users(db.Model, UserMixin):
     password = db.Column(db.String(255), default='')
     email = db.Column(db.String(255), unique=True, default='')
     username = db.Column(db.String(255), default='')
+    qrcode_url = db.Column(db.String(500), default='')
     profile_img_url = db.Column(db.String(255), default='')
     id_user_hash = db.Column(db.String(255), unique=True, default='')
     is_vendor = db.Column(TINYINT(1), default=0)
