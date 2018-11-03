@@ -2,6 +2,7 @@
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.mysql import TIMESTAMP, TINYINT
+from sqlalchemy import UniqueConstraint
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash
 from datetime import datetime
@@ -31,6 +32,7 @@ class Users(db.Model, UserMixin):
 
 class Items(db.Model):
     __tablename__ = 'ITEMS'
+    __table_args__ = UniqueConstraint('id_vendor', 'item_name')
     id_item = db.Column(db.Integer, primary_key=True)
     id_vendor = db.Column(db.Integer, db.ForeignKey(
         'VENDORS.id_vendor', ondelete='RESTRICT', onupdate='RESTRICT'))
@@ -38,7 +40,7 @@ class Items(db.Model):
     description = db.Column(db.String(255), default='')
     category = db.Column(db.String(255), default='')
     price = db.Column(db.Float, default=0.0)
-    image_url = db.Column(db.String(255), default='')
+    image_url = db.Column(db.String(500), default='')
     order_count = db.Column(db.Integer, default=0)
     create_timestamp = db.Column(
         TIMESTAMP, default=datetime.utcnow().replace(microsecond=0))
