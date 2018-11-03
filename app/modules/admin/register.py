@@ -1,4 +1,4 @@
-from flask import jsonify, request, current_app
+from flask import jsonify, request, current_app, session
 from flask_login import login_required, current_user, login_user, logout_user
 from sqlalchemy import exc
 from models import db, Users
@@ -61,7 +61,7 @@ def register():
         except exc.IntegrityError:
             status = -1
         except Exception as e:
-            current_app.logger.info(e)
+            current_app.logger.info('Failed to add new user: ' + str(e))
             status = 0
     else:
         status = 0
@@ -92,7 +92,8 @@ def login():
     # Login verification
     if user:
         if user.check_password(password):
-            login_user(user, remember=remember, duration=timedelta(minutes=30))
+            login_user(user, remember=remember, duration=timedelta(days=30))
+            session['id_user'] = user.id_user_hash
             return jsonify({'status': 1})
         else:
             return jsonify({'status': -1})
@@ -103,6 +104,7 @@ def login():
 @login_required
 def logout():
     try:
+        session.clear()
         logout_user()
         status = 1
     except Exception:
