@@ -32,10 +32,10 @@ class Users(db.Model, UserMixin):
 
 class Items(db.Model):
     __tablename__ = 'ITEMS'
-    __table_args__ = UniqueConstraint('id_vendor', 'item_name')
+    __table_args__ = (UniqueConstraint('id_user', 'item_name'),)
     id_item = db.Column(db.Integer, primary_key=True)
-    id_vendor = db.Column(db.Integer, db.ForeignKey(
-        'VENDORS.id_vendor', ondelete='RESTRICT', onupdate='RESTRICT'))
+    id_user = db.Column(db.Integer, db.ForeignKey(
+        'USERS.id_user', ondelete='RESTRICT', onupdate='RESTRICT'))
     item_name = db.Column(db.String(255), default='')
     description = db.Column(db.String(255), default='')
     category = db.Column(db.String(255), default='')
