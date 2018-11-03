@@ -4,10 +4,15 @@ from sqlalchemy import exc
 from models import db, Users
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
+from PIL import Image
 import hashlib
 import qrcode
-import boto3
 import os
+
+# Add custom helper modules
+from app.utils.validate_file_ext import allowed_ext
+from app.utils.img_resize import resizeImage
+from app.utils.upload_img import uploadImage
 
 
 def register():
@@ -27,59 +32,38 @@ def register():
 
     # Generate QR code using the hashed username
     qr_code = qrcode.make(hashed_username)
-    qr_code_filepath = current_app.config['IMG_DIR'] + hashed_username + '.png'
+    qr_filename = hashed_username + '_qrcode.png'
+    qr_code_filepath = current_app.config['IMG_DIR'] + qr_filename
     qr_code.save(qr_code_filepath)
 
-    # Upload to S3 bucket
-    S3_BUCKET = current_app.config['S3_BUCKET']
-    S3_KEY = current_app.config['S3_KEY']
-    S3_SECRET = current_app.config['S3_SECRET_ACCESS_KEY']
-    S3_FILE_PATH = hashed_username + "/" + hashed_username + '.png'
+    S3_FILE_PATH = hashed_username + "/" + qr_filename
 
-    # Create the instance connection to the S3 bucket
-    s3 = boto3.client(
-        's3',
-        aws_access_key_id=S3_KEY,
-        aws_secret_access_key=S3_SECRET
-    )
+    if uploadImage(localpath=qr_code_filepath, S3path=S3_FILE_PATH):
+        # Hash the password
+        hashed_password = generate_password_hash(password)
+        timestamp = datetime.utcnow().replace(microsecond=0)
 
-    # Upload the file to the S3 bucket
-    try:
-        s3.upload_file(
-            Bucket=S3_BUCKET,
-            Filename=qr_code_filepath,
-            Key=S3_FILE_PATH
+        user = Users(
+            password=hashed_password,
+            email=email,
+            username=username,
+            qrcode_url=S3_FILE_PATH,
+            profile_img_url='',
+            id_user_hash=hashed_username,
+            is_vendor=is_vendor,
+            create_timestamp=timestamp
         )
-    except Exception as e:
-        current_app.logger.info('Upload QR code error: ' + str(e))
-    finally:
-        # Remove the local QR code image
-        os.remove(qr_code_filepath)
 
-    # Hash the password
-    hashed_password = generate_password_hash(password)
-
-    timestamp = datetime.utcnow().replace(microsecond=0)
-
-    user = Users(
-        password=hashed_password,
-        email=email,
-        username=username,
-        qrcode_url=S3_FILE_PATH,
-        profile_img_url='',
-        id_user_hash=hashed_username,
-        is_vendor=is_vendor,
-        create_timestamp=timestamp
-    )
-
-    status = 1
-    try:
-        db.session.add(user)
-        db.session.commit()
-    except exc.IntegrityError:
-        status = -1
-    except Exception as e:
-        current_app.logger.info(e)
+        try:
+            db.session.add(user)
+            db.session.commit()
+            status = 1
+        except exc.IntegrityError:
+            status = -1
+        except Exception as e:
+            current_app.logger.info(e)
+            status = 0
+    else:
         status = 0
 
     return jsonify({"status": status})
@@ -151,3 +135,51 @@ def getQRcode():
         'url': url,
         'status': status
     })
+
+
+@login_required
+def uploadProfileImg():
+    img_file = request.files.get('file', '')
+    email = str(request.form.get('email', ''))
+    status = 0
+
+    if img_file and email:
+        # Verify the uploaded file extension before processing it
+        if allowed_ext(img_file.filename):
+            user = db.session.query(
+                Users
+            ).filter(
+                Users.email == email
+            ).scalar()
+
+            if user:
+                # Create new filename
+                hashed_username = user.id_user_hash
+                filename = hashed_username + '_profileimg.png'
+
+                # Save the image to tmp directory
+                img_file = Image.open(img_file)
+                full_img_filename = os.path.join(
+                    current_app.config['IMG_DIR'], filename)
+                img_file.save(full_img_filename)
+
+                # Resize the image
+                if (resizeImage(img_path=full_img_filename, width=1080, height=1920)):
+                    S3_FILE_PATH = hashed_username + "/" + filename
+                    # Upload the file to S3
+                    if uploadImage(localpath=full_img_filename, S3path=S3_FILE_PATH):
+                        user.profile_img_url = S3_FILE_PATH
+                        try:
+                            db.session.commit()
+                            status = 1
+                        except Exception as e:
+                            current_app.logger.info(
+                                "Failed to save the profile_img_url: " + str(e))
+            else:
+                status = -1
+        else:
+            status = -1
+    else:
+        status = -1
+
+    return jsonify({'status': status})
