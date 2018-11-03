@@ -14,6 +14,6 @@ module.add_url_rule('/admin/login',
 module.add_url_rule('/admin/logout',
                     view_func=logout, methods=['GET'])
 module.add_url_rule('/admin/getQRcode',
-                    view_func=getQRcode, methods=['POST'])
+                    view_func=getQRcode, methods=['GET'])
 module.add_url_rule('/admin/uploadProfileImg',
                     view_func=uploadProfileImg, methods=['POST'])
