@@ -115,16 +115,12 @@ def logout():
 
 @login_required
 def getQRcode():
-    email = str(request.form.get('email', ''))
-
-    if not email:
-        status = 0
-        url = ''
-    else:
+    hashed_vendor_id = str(session.get('id_user'))
+    if hashed_vendor_id:
         url = db.session.query(
             Users.qrcode_url
         ).filter(
-            Users.email == email
+            Users.id_user_hash == hashed_vendor_id
         ).scalar()
 
         if url:
@@ -132,6 +128,9 @@ def getQRcode():
         else:
             status = -1
             url = ''
+    else:
+        status = 0
+        url = ''
 
     return jsonify({
         'url': url,
@@ -142,16 +141,16 @@ def getQRcode():
 @login_required
 def uploadProfileImg():
     img_file = request.files.get('file', '')
-    email = str(request.form.get('email', ''))
+    hashed_vendor_id = str(session.get('id_user'))
     status = 0
 
-    if img_file and email:
+    if img_file and hashed_vendor_id:
         # Verify the uploaded file extension before processing it
         if allowed_ext(img_file.filename):
             user = db.session.query(
                 Users
             ).filter(
-                Users.email == email
+                Users.id_user_hash == hashed_vendor_id
             ).scalar()
 
             if user:
