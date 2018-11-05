@@ -1,4 +1,4 @@
-from flask import jsonify, request, current_app
+from flask import jsonify, request, current_app, session
 from flask_login import login_required, current_user, login_user, logout_user
 from sqlalchemy import exc
 from models import db, Users
@@ -32,8 +32,11 @@ def register():
 
     # Generate QR code using the hashed username
     qr_code = qrcode.make(hashed_username)
-    qr_filename = hashed_username + '_qrcode.png'
-    qr_code_filepath = current_app.config['IMG_DIR'] + qr_filename
+    qr_filename = 'qrcode.png'
+    filepath = os.path.join(
+        current_app.config['IMG_DIR'], hashed_username)
+    os.mkdir(filepath)
+    qr_code_filepath = os.path.join(filepath, qr_filename)
     qr_code.save(qr_code_filepath)
 
     S3_FILE_PATH = hashed_username + "/" + qr_filename
@@ -61,7 +64,7 @@ def register():
         except exc.IntegrityError:
             status = -1
         except Exception as e:
-            current_app.logger.info(e)
+            current_app.logger.info('Failed to add new user: ' + str(e))
             status = 0
     else:
         status = 0
@@ -92,7 +95,8 @@ def login():
     # Login verification
     if user:
         if user.check_password(password):
-            login_user(user, remember=remember, duration=timedelta(minutes=30))
+            login_user(user, remember=remember, duration=timedelta(days=30))
+            session['id_user'] = user.id_user_hash
             return jsonify({'status': 1})
         else:
             return jsonify({'status': -1})
@@ -103,6 +107,7 @@ def login():
 @login_required
 def logout():
     try:
+        session.clear()
         logout_user()
         status = 1
     except Exception:
@@ -113,16 +118,12 @@ def logout():
 
 @login_required
 def getQRcode():
-    email = str(request.form.get('email', ''))
-
-    if not email:
-        status = 0
-        url = ''
-    else:
+    hashed_vendor_id = str(session.get('id_user'))
+    if hashed_vendor_id:
         url = db.session.query(
             Users.qrcode_url
         ).filter(
-            Users.email == email
+            Users.id_user_hash == hashed_vendor_id
         ).scalar()
 
         if url:
@@ -130,6 +131,9 @@ def getQRcode():
         else:
             status = -1
             url = ''
+    else:
+        status = 0
+        url = ''
 
     return jsonify({
         'url': url,
@@ -140,32 +144,33 @@ def getQRcode():
 @login_required
 def uploadProfileImg():
     img_file = request.files.get('file', '')
-    email = str(request.form.get('email', ''))
+    hashed_vendor_id = str(session.get('id_user'))
     status = 0
 
-    if img_file and email:
+    if img_file and hashed_vendor_id:
         # Verify the uploaded file extension before processing it
         if allowed_ext(img_file.filename):
             user = db.session.query(
                 Users
             ).filter(
-                Users.email == email
+                Users.id_user_hash == hashed_vendor_id
             ).scalar()
 
             if user:
                 # Create new filename
-                hashed_username = user.id_user_hash
-                filename = hashed_username + '_profileimg.png'
+                filename = 'profileimg.png'
 
                 # Save the image to tmp directory
                 img_file = Image.open(img_file)
-                full_img_filename = os.path.join(
-                    current_app.config['IMG_DIR'], filename)
+                filepath = os.path.join(
+                    current_app.config['IMG_DIR'], hashed_vendor_id)
+                os.mkdir(filepath)
+                full_img_filename = os.path.join(filepath, filename)
                 img_file.save(full_img_filename)
 
                 # Resize the image
                 if (resizeImage(img_path=full_img_filename, width=1080, height=1920)):
-                    S3_FILE_PATH = hashed_username + "/" + filename
+                    S3_FILE_PATH = hashed_vendor_id + "/" + filename
                     # Upload the file to S3
                     if uploadImage(localpath=full_img_filename, S3path=S3_FILE_PATH):
                         user.profile_img_url = S3_FILE_PATH

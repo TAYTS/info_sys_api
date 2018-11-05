@@ -31,5 +31,6 @@ def uploadImage(localpath, S3path):
     finally:
         # Remove the local QR code image
         os.remove(localpath)
+        os.rmdir(localpath[:localpath.rindex('/')])
 
     return status

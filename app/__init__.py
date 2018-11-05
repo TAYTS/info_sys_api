@@ -47,10 +47,12 @@ def make_app(config='config.py'):
     # Define all the modules
     from app.modules import core
     from app.modules import admin
+    from app.modules import inventory
 
     # Register the blueprint of each module
     app.register_blueprint(core.module)
     app.register_blueprint(admin.module)
+    app.register_blueprint(inventory.module)
 
     return app
 
