@@ -32,8 +32,11 @@ def register():
 
     # Generate QR code using the hashed username
     qr_code = qrcode.make(hashed_username)
-    qr_filename = hashed_username + '_qrcode.png'
-    qr_code_filepath = current_app.config['IMG_DIR'] + qr_filename
+    qr_filename = 'qrcode.png'
+    filepath = os.path.join(
+        current_app.config['IMG_DIR'], hashed_username)
+    os.mkdir(filepath)
+    qr_code_filepath = os.path.join(filepath, qr_filename)
     qr_code.save(qr_code_filepath)
 
     S3_FILE_PATH = hashed_username + "/" + qr_filename
@@ -155,18 +158,19 @@ def uploadProfileImg():
 
             if user:
                 # Create new filename
-                hashed_username = user.id_user_hash
-                filename = hashed_username + '_profileimg.png'
+                filename = 'profileimg.png'
 
                 # Save the image to tmp directory
                 img_file = Image.open(img_file)
-                full_img_filename = os.path.join(
-                    current_app.config['IMG_DIR'], filename)
+                filepath = os.path.join(
+                    current_app.config['IMG_DIR'], hashed_vendor_id)
+                os.mkdir(filepath)
+                full_img_filename = os.path.join(filepath, filename)
                 img_file.save(full_img_filename)
 
                 # Resize the image
                 if (resizeImage(img_path=full_img_filename, width=1080, height=1920)):
-                    S3_FILE_PATH = hashed_username + "/" + filename
+                    S3_FILE_PATH = hashed_vendor_id + "/" + filename
                     # Upload the file to S3
                     if uploadImage(localpath=full_img_filename, S3path=S3_FILE_PATH):
                         user.profile_img_url = S3_FILE_PATH

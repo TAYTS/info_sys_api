@@ -142,13 +142,14 @@ def uploadItemImg():
 
             if vendor_item:
                 # Create new filename
-                filename = hashed_vendor_id + '_' + \
-                    secure_filename(item_name) + '.png'
+                filename = secure_filename(item_name) + '.png'
 
                 # Save the image to tmp directory
                 img_file = Image.open(img_file)
-                full_img_filename = os.path.join(
-                    current_app.config['IMG_DIR'], filename)
+                filepath = os.path.join(
+                    current_app.config['IMG_DIR'], hashed_vendor_id)
+                os.mkdir(filepath)
+                full_img_filename = os.path.join(filepath, filename)
                 img_file.save(full_img_filename)
 
                 # Resize the image
