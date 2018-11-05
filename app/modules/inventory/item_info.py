@@ -44,6 +44,7 @@ def listItem(vendor_id):
         for item in items:
             temp = {
                 'item_name': item.item_name,
+                'description': item.description,
                 'category': item.category,
                 'price': item.price,
                 'image_url': item.image_url
