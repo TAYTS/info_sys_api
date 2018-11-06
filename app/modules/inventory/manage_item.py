@@ -62,7 +62,6 @@ def remove_items():
     hashed_vendor_id = str(session.get('id_user'))
     item_name = request.form.get('item_name', '')
     status = 0
-    current_app.logger.info(item_name)
     if item_name and hashed_vendor_id:
         vendor_id = db.session.query(
             Users.id_user

@@ -97,11 +97,20 @@ def login():
         if user.check_password(password):
             login_user(user, remember=remember, duration=timedelta(days=30))
             session['id_user'] = user.id_user_hash
-            return jsonify({'status': 1})
+            return jsonify({
+                'status': 1,
+                'is_vendor': user.is_vendor
+            })
         else:
-            return jsonify({'status': -1})
+            return jsonify({
+                'status': -1,
+                'is_vendor': -1
+            })
     else:
-        return jsonify({'status': -1})
+        return jsonify({
+            'status': -1,
+            'is_vendor': -1
+        })
 
 
 @login_required
