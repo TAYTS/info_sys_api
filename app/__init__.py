@@ -48,11 +48,13 @@ def make_app(config='config.py'):
     from app.modules import core
     from app.modules import admin
     from app.modules import inventory
+    from app.modules import sales
 
     # Register the blueprint of each module
     app.register_blueprint(core.module)
     app.register_blueprint(admin.module)
     app.register_blueprint(inventory.module)
+    app.register_blueprint(sales.module)
 
     return app
 
