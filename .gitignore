@@ -1,0 +1,8 @@
+*.pyc
+/venv
+
+
+# Ignore system file
+.DS_Store
+.vscode/*
+

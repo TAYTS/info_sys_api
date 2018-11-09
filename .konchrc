@@ -1,0 +1,30 @@
+import konch
+
+from flask_sqlalchemy import DefaultMeta
+
+from app import make_app
+import models
+# Available options:
+#   'context', 'banner', 'shell', 'prompt', 'output',
+#   'context_format', 'ipy_extensions', 'ipy_autoreload',
+#   'ipy_colors', 'ipy_highlighting_style'
+curr_app = make_app()
+model_instance_list = [models.__dict__.get(a) for a in dir(models) if isinstance(models.__dict__.get(a), DefaultMeta)]
+model_context_dict = {x.__name__: x for x in model_instance_list}
+
+context_dict = {
+    'app': curr_app,
+    'db': models.db
+}
+context_dict.update(model_context_dict)
+konch.config({
+    'context': context_dict,
+    'ipy_autoreload': True
+})
+
+ctx = curr_app.test_request_context()
+def setup():
+    ctx.push()
+
+def teardown():
+    ctx.pop()
