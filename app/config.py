@@ -15,6 +15,7 @@ APP_LOG_LEVEL = 'DEBUG'
 
 # App Session Setting
 SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
 PERMANENT_SESSION_LIFETIME = timedelta(days=30)
 
 # AWS
@@ -26,3 +27,6 @@ S3_LOCATION = "http://{}.s3.amazonaws.com/".format(S3_BUCKET)
 # Image temporary directory
 IMG_DIR = "/home/info_sys/info_sys_api/tmp/"
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+
+# Firebase Cloud Messaging(FCM)
+FSM_API_KEY = ""

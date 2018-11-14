@@ -4,45 +4,56 @@ from models import db, Items, Users, Tasks
 from datetime import datetime
 import json
 
+# Add custom helper modules
+from app.utils.push_notificaiton import push_notification
+
 
 @login_required
 def submit_order():
     content = json.loads(request.data)
     orders = content.get('orders', [])
+    hashed_customer_id = str(session.get('id_user'))
     hashed_vendor_id = content.get('vendor_id', '')
     table_id = content.get('table_id', 0)
     timestamp = datetime.utcnow().replace(microsecond=0)
 
-    if orders and hashed_vendor_id and table_id:
+    if orders and hashed_vendor_id and table_id and hashed_customer_id:
         item_list = [x['item_name'] for x in orders]
         item_count = {}
         for x in orders:
             item_count[x['item_name']] = x['qty']
 
-        vendor_items = db.session.query(
-            Items
+        customer = db.aliased(Users)
+        query = db.session.query(
+            Items, customer
         ).join(
             Users,
             Users.id_user == Items.id_user
+        ).outerjoin(
+            customer,
+            customer.id_user_hash == hashed_customer_id
         ).filter(
             Users.id_user_hash == hashed_vendor_id,
             Items.item_name.in_(item_list)
         ).all()
 
         tasks = []
-        for x in vendor_items:
+        for x in query:
             task = Tasks(
-                id_user=x.id_user,
-                id_item=x.id_item,
+                id_user=x[0].id_user,
+                id_cust=x[1].id_user if x[1].id_user else -1,
+                id_item=x[0].id_item,
                 id_table=table_id,
-                order_count=item_count.get(x.item_name),
+                order_count=item_count.get(x[0].item_name),
                 create_timestamp=timestamp
             )
-            x.order_count += item_count.get(x.item_name)
+            x[0].order_count += item_count.get(x[0].item_name)
             tasks.append(task)
         try:
             db.session.add_all(tasks)
             db.session.commit()
+            # Send push notification to the Vendor
+            push_notification(title="Testing Flask", body="New Task Added")
             status = 1
         except Exception as e:
             current_app.logger.info("Failed to add order: " + str(e))
