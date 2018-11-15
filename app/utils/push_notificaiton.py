@@ -1,18 +1,41 @@
 from flask import current_app
 from pyfcm import FCMNotification
+from models import db, Users, FCM_Access_Token
 
 
-def push_notification(title, body):
+def push_notification(title, body, id_vendor):
     api_key = current_app.config['FSM_API_KEY']
     push_service = FCMNotification(api_key=api_key)
 
-    registration_id = 'dW_i98gdA9E:APA91bERvKntGP-r9ghZmHFxFYZHMDzTaCsWKFI6_Gt5joaXQzweMgN99et8gX1n5BIojWnFU9mZQK958DPZrZY3NbnvJ2SAGQOU5WQBkZmzKjU3Av_i-3jfAqFhaQAV1_B8Xu8WPhHe'
-    message_title = title
-    message_body = body
-    result = push_service.notify_single_device(
-        registration_id=registration_id,
-        message_title=message_title,
-        message_body=message_body
+    token_query = db.session.query(
+        FCM_Access_Token
+    ).join(
+        Users,
+        Users.id_user == FCM_Access_Token.id_user
+    ).filter(
+        Users.id_user_hash == id_vendor
     )
 
-    return result.get('success')
+    token_list = token_query.all()
+    registration_ids = []
+    for token in token_list:
+        registration_ids.append(token.access_token)
+
+    message_title = title
+    message_body = body
+    results = push_service.notify_multiple_devices(
+        registration_ids=registration_ids,
+        message_title=message_title,
+        message_body=message_body
+    ).get('results', [])
+
+    # Remove the unused token if there is any
+    reject_token = []
+    for idx in range(len(results)):
+        if 'error' in results[idx]:
+            reject_token.append(registration_ids[idx])
+
+    if reject_token:
+        token_query = token_query.filter(
+            FCM_Access_Token.access_token.in_(reject_token)
+        ).delete(synchronize_session=False)

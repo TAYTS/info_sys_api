@@ -53,7 +53,8 @@ def submit_order():
             db.session.add_all(tasks)
             db.session.commit()
             # Send push notification to the Vendor
-            push_notification(title="Testing Flask", body="New Task Added")
+            push_notification(
+                title="New Order", body="Your have new order!", id_vendor=hashed_vendor_id)
             status = 1
         except Exception as e:
             current_app.logger.info("Failed to add order: " + str(e))

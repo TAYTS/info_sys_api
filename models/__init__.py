@@ -59,3 +59,11 @@ class Tasks(db.Model):
     order_count = db.Column(db.Integer)
     create_timestamp = db.Column(
         TIMESTAMP, default=datetime.utcnow().replace(microsecond=0))
+
+
+class FCM_Access_Token(db.Model):
+    __tablename__ = "FCM_ACCESS_TOKEN"
+    id_token = db.Column(db.Integer, primary_key=True)
+    id_user = db.Column(db.Integer, db.ForeignKey(
+        'USERS.id_user', ondelete='RESTRICT', onupdate='RESTRICT'))
+    access_token = db.Column(db.String(255), default='')
