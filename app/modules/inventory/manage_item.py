@@ -81,22 +81,24 @@ def remove_items():
                 # Get the image URL for the item
                 imgURL = item.scalar().image_url
 
-                # Initialise the S3 bucket connection
-                S3_BUCKET = current_app.config['S3_BUCKET']
-                S3_KEY = current_app.config['S3_KEY']
-                S3_SECRET = current_app.config['S3_SECRET_ACCESS_KEY']
+                if imgURL:
+                    # Initialise the S3 bucket connection
+                    S3_BUCKET = current_app.config['S3_BUCKET']
+                    S3_KEY = current_app.config['S3_KEY']
+                    S3_SECRET = current_app.config['S3_SECRET_ACCESS_KEY']
 
-                s3 = boto3.client(
-                    's3',
-                    aws_access_key_id=S3_KEY,
-                    aws_secret_access_key=S3_SECRET
-                )
+                    s3 = boto3.client(
+                        's3',
+                        aws_access_key_id=S3_KEY,
+                        aws_secret_access_key=S3_SECRET
+                    )
 
-                # Delete the file saved on the S3 bucket
-                s3.delete_object(Bucket=S3_BUCKET, Key=imgURL)
+                    # Delete the file saved on the S3 bucket
+                    s3.delete_object(Bucket=S3_BUCKET, Key=imgURL)
 
                 item.delete(synchronize_session=False)
                 db.session.commit()
+                status = 1
             except Exception as e:
                 current_app.logger.info('Failed to remove items: ' + str(e))
 
