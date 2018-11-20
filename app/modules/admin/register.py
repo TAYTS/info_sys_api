@@ -75,7 +75,15 @@ def register():
 def login():
     # Return directly if the user has authenticated
     if current_user.is_authenticated:
-        return jsonify({'status': 1})
+        is_vendor = session.get('is_vendor', -1)
+        if is_vendor != -1:
+            status = 1
+        else:
+            status = -1
+        return jsonify({
+            'status': status,
+            'is_vendor': is_vendor
+        })
 
     password = str(request.form.get('password', ''))
     email = str(request.form.get('email', ''))
@@ -97,6 +105,7 @@ def login():
         if user.check_password(password):
             login_user(user, remember=remember, duration=timedelta(days=30))
             session['id_user'] = user.id_user_hash
+            session['is_vendor'] = user.is_vendor
             return jsonify({
                 'status': 1,
                 'is_vendor': user.is_vendor
