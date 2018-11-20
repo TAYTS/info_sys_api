@@ -172,7 +172,7 @@ def uploadItemImg():
                 img_file.save(full_img_filename)
 
                 # Resize the image
-                if (resizeImage(img_path=full_img_filename, width=768, height=1024)):
+                if (resizeImage(img_path=full_img_filename, width=768, height=768)):
                     S3_FILE_PATH = hashed_vendor_id + "/" + filename
                     # Upload the file to S3
                     if uploadImage(localpath=full_img_filename, S3path=S3_FILE_PATH):
