@@ -4,14 +4,13 @@ from sqlalchemy import exc
 from models import db, Users, Items
 from werkzeug.utils import secure_filename
 from datetime import datetime
-from PIL import Image
 import os
 import boto3
 
 # Add custom helper modules
-from app.utils.validate_file_ext import allowed_ext
 from app.utils.img_resize import resizeImage
 from app.utils.upload_img import uploadImage
+from app.utils.str_to_img import str_to_img
 
 
 @login_required
@@ -146,33 +145,31 @@ def edit_item():
 def uploadItemImg():
     hashed_vendor_id = str(session.get('id_user'))
     item_name = str(request.form.get('item_name', ''))
-    img_file = request.files.get('file', '')
+    img_file = str(request.form.get('file', ''))
     status = 0
 
     if hashed_vendor_id and item_name and img_file:
-        if allowed_ext(img_file.filename):
-            vendor_item = db.session.query(
-                Users.id_user, Items
-            ).join(
-                Items,
-                Items.id_user == Users.id_user
-            ).filter(
-                Users.id_user_hash == hashed_vendor_id,
-                Items.item_name == item_name
-            ).first()
+        vendor_item = db.session.query(
+            Users.id_user, Items
+        ).join(
+            Items,
+            Items.id_user == Users.id_user
+        ).filter(
+            Users.id_user_hash == hashed_vendor_id,
+            Items.item_name == item_name
+        ).first()
 
-            if vendor_item:
-                # Create new filename
-                filename = secure_filename(item_name) + '.png'
+        if vendor_item:
+            # Create new filename
+            filename = secure_filename(item_name) + '.png'
 
-                # Save the image to tmp directory
-                img_file = Image.open(img_file)
-                filepath = os.path.join(
-                    current_app.config['IMG_DIR'], hashed_vendor_id)
-                os.mkdir(filepath)
-                full_img_filename = os.path.join(filepath, filename)
-                img_file.save(full_img_filename)
+            # Create tmp file directory for image
+            filepath = os.path.join(
+                current_app.config['IMG_DIR'], hashed_vendor_id)
+            os.mkdir(filepath)
+            full_img_filename = os.path.join(filepath, filename)
 
+            if str_to_img(img_file, full_img_filename):
                 # Resize the image
                 if (resizeImage(img_path=full_img_filename, width=768, height=768)):
                     S3_FILE_PATH = hashed_vendor_id + "/" + filename
@@ -184,6 +181,8 @@ def uploadItemImg():
                             status = 1
                         except Exception as e:
                             current_app.logger.info(
-                                "Failed to save the profile_img_url: " + str(e))
+                                "Failed to save the image_url: " + str(e))
+            else:
+                status = -1
 
     return jsonify({'status': status})

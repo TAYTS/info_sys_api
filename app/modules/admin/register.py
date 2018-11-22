@@ -4,15 +4,14 @@ from sqlalchemy import exc
 from models import db, Users
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
-from PIL import Image
 import hashlib
 import qrcode
 import os
 
 # Add custom helper modules
-from app.utils.validate_file_ext import allowed_ext
 from app.utils.img_resize import resizeImage
 from app.utils.upload_img import uploadImage
+from app.utils.str_to_img import str_to_img
 
 
 def register():
@@ -161,31 +160,28 @@ def getQRcode():
 
 @login_required
 def uploadProfileImg():
-    img_file = request.files.get('file', '')
+    img_file = str(request.form.get('file', ''))
     hashed_vendor_id = str(session.get('id_user'))
     status = 0
 
     if img_file and hashed_vendor_id:
-        # Verify the uploaded file extension before processing it
-        if allowed_ext(img_file.filename):
-            user = db.session.query(
-                Users
-            ).filter(
-                Users.id_user_hash == hashed_vendor_id
-            ).scalar()
+        user = db.session.query(
+            Users
+        ).filter(
+            Users.id_user_hash == hashed_vendor_id
+        ).scalar()
 
-            if user:
-                # Create new filename
-                filename = 'profileimg.png'
+        if user:
+            # Create new filename
+            filename = 'profileimg.png'
 
-                # Save the image to tmp directory
-                img_file = Image.open(img_file)
-                filepath = os.path.join(
-                    current_app.config['IMG_DIR'], hashed_vendor_id)
-                os.mkdir(filepath)
-                full_img_filename = os.path.join(filepath, filename)
-                img_file.save(full_img_filename)
+            # Create tmp file directory for image
+            filepath = os.path.join(
+                current_app.config['IMG_DIR'], hashed_vendor_id)
+            os.mkdir(filepath)
+            full_img_filename = os.path.join(filepath, filename)
 
+            if str_to_img(img_file, full_img_filename):
                 # Resize the image
                 if (resizeImage(img_path=full_img_filename, width=1080, height=1920)):
                     S3_FILE_PATH = hashed_vendor_id + "/" + filename
@@ -198,8 +194,6 @@ def uploadProfileImg():
                         except Exception as e:
                             current_app.logger.info(
                                 "Failed to save the profile_img_url: " + str(e))
-            else:
-                status = -1
         else:
             status = -1
     else:
