@@ -86,7 +86,6 @@ def login():
 
     password = str(request.form.get('password', ''))
     email = str(request.form.get('email', ''))
-    remember = int(request.form.get('remember', 0))
 
     # Return if any of the POST parameter is empty
     if not(password and email):
@@ -102,7 +101,7 @@ def login():
     # Login verification
     if user:
         if user.check_password(password):
-            login_user(user, remember=remember, duration=timedelta(days=30))
+            login_user(user)
             session['id_user'] = user.id_user_hash
             session['is_vendor'] = user.is_vendor
             return jsonify({
