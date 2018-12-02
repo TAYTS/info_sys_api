@@ -26,7 +26,7 @@ def uploadImage(localpath, S3path):
             Key=S3_FILE_PATH
         )
     except Exception as e:
-        current_app.logger.info('Upload QR code error: ' + str(e))
+        current_app.logger.info('Upload image error: ' + str(e))
         status = False
     finally:
         # Remove the local QR code image

@@ -1,9 +1,9 @@
 from flask import jsonify, request, current_app, session
 from flask_login import login_required, current_user, login_user, logout_user
 from sqlalchemy import exc
-from models import db, Users
+from models import db, Users, FCM_Access_Token
 from werkzeug.security import generate_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime
 import hashlib
 import qrcode
 import os
@@ -86,27 +86,54 @@ def login():
 
     password = str(request.form.get('password', ''))
     email = str(request.form.get('email', ''))
+    device_id = str(request.form.get('deviceID', ''))
 
     # Return if any of the POST parameter is empty
     if not(password and email):
         return jsonify({'status': 0})
 
-    # Get user using email
+    # Get user account and FCM ID using email
     user = db.session.query(
-        Users
+        Users, FCM_Access_Token
+    ).outerjoin(
+        FCM_Access_Token,
+        db.and_(
+            Users.id_user == FCM_Access_Token.id_user,
+            FCM_Access_Token.access_token == device_id
+        )
     ).filter(
         Users.email == email
-    ).scalar()
+    ).first()
 
     # Login verification
     if user:
-        if user.check_password(password):
-            login_user(user)
-            session['id_user'] = user.id_user_hash
-            session['is_vendor'] = user.is_vendor
+        if user.Users.check_password(password):
+            # If the user does not have FCM Access Token
+            # Add new record
+            if not user.FCM_Access_Token:
+                try:
+                    FCM_token = FCM_Access_Token(
+                        id_user=user.Users.id_user,
+                        access_token=device_id
+                    )
+                    db.session.add(FCM_token)
+                    db.session.commit()
+                except exc.IntegrityError:
+                    current_app.logger.info(
+                        "Unable to add FCM Token due to integrity issue")
+                except Exception as e:
+                    current_app.logger.info(
+                        "Failed to add FCM Toekn: " + str(e))
+                    return jsonify({
+                        'status': -1,
+                        'is_vendor': -1
+                    })
+            login_user(user.Users)
+            session['id_user'] = user.Users.id_user_hash
+            session['is_vendor'] = user.Users.is_vendor
             return jsonify({
                 'status': 1,
-                'is_vendor': user.is_vendor
+                'is_vendor': user.Users.is_vendor
             })
         else:
             return jsonify({
