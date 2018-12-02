@@ -18,5 +18,7 @@ module.add_url_rule('/inventory/uploadImg',
                     view_func=uploadItemImg, methods=['POST'])
 module.add_url_rule('/inventory/getItem/<vendor_id>/<item_name>',
                     view_func=getItemInfo, methods=['GET'])
+module.add_url_rule('/inventory/listItem',
+                    view_func=listItem, methods=['GET'])
 module.add_url_rule('/inventory/listItem/<vendor_id>',
                     view_func=listItem, methods=['GET'])

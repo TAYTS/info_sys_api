@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, session
 from models import db, Items, Users
 
 
@@ -28,7 +28,18 @@ def getItemInfo(vendor_id, item_name):
     return jsonify({'details': details})
 
 
-def listItem(vendor_id):
+def listItem(vendor_id=""):
+    data = {'data': []}
+
+    # If vendor_id is not present in the GET -> Vendor
+    # Get the vendor_id from session
+    if not vendor_id:
+        # Get the hashed_vendor_id
+        vendor_id = str(session.get('id_user'))
+        # Verify the vendor_id stored in the session is vendor
+        if not session.get('is_vendor', 0):
+            return jsonify(data)
+
     items = db.session.query(
         Items
     ).join(
@@ -37,8 +48,6 @@ def listItem(vendor_id):
     ).filter(
         Users.id_user_hash == vendor_id,
     ).all()
-
-    data = {'data': []}
 
     if items:
         for item in items:
