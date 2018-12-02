@@ -62,6 +62,7 @@ class Tasks(db.Model):
 
 
 class FCM_Access_Token(db.Model):
+    __table_args__ = (UniqueConstraint('id_user', 'access_token'),)
     __tablename__ = "FCM_ACCESS_TOKEN"
     id_token = db.Column(db.Integer, primary_key=True)
     id_user = db.Column(db.Integer, db.ForeignKey(
