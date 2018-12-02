@@ -1,6 +1,6 @@
 from flask import current_app
 from pyfcm import FCMNotification
-from models import db, Users, FCM_Access_Token
+from models import db, FCM_Access_Token
 
 
 def push_notification(title, body, id_vendor):
@@ -9,11 +9,8 @@ def push_notification(title, body, id_vendor):
 
     token_query = db.session.query(
         FCM_Access_Token
-    ).join(
-        Users,
-        Users.id_user == FCM_Access_Token.id_user
     ).filter(
-        Users.id_user_hash == id_vendor
+        FCM_Access_Token.id_user == id_vendor
     )
 
     token_list = token_query.all()
@@ -39,3 +36,4 @@ def push_notification(title, body, id_vendor):
         token_query = token_query.filter(
             FCM_Access_Token.access_token.in_(reject_token)
         ).delete(synchronize_session=False)
+        db.session.commit()
