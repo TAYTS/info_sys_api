@@ -114,7 +114,8 @@ def login():
                 try:
                     FCM_token = FCM_Access_Token(
                         id_user=user.Users.id_user,
-                        access_token=device_id
+                        access_token=device_id,
+                        create_timestamp=datetime.utcnow().replace(microsecond=0)
                     )
                     db.session.add(FCM_token)
                     db.session.commit()

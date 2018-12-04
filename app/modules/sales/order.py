@@ -38,7 +38,6 @@ def submit_order():
         ).all()
 
         if query:
-            id_vendor = query[0][0].id_user
             tasks = []
             for x in query:
                 task = Tasks(
@@ -58,7 +57,7 @@ def submit_order():
                 push_notification(
                     title="New Order",
                     body="Your have new order!",
-                    id_vendor=id_vendor
+                    id_vendor=hashed_vendor_id
                 )
                 status = 1
             except Exception as e:
