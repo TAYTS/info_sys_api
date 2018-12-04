@@ -68,3 +68,5 @@ class FCM_Access_Token(db.Model):
     id_user = db.Column(db.Integer, db.ForeignKey(
         'USERS.id_user', ondelete='RESTRICT', onupdate='RESTRICT'))
     access_token = db.Column(db.String(255), default='')
+    create_timestamp = db.Column(
+        TIMESTAMP, default=datetime.utcnow().replace(microsecond=0))

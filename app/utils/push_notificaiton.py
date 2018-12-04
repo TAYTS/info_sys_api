@@ -1,6 +1,6 @@
 from flask import current_app
 from pyfcm import FCMNotification
-from models import db, FCM_Access_Token
+from models import db, Users, FCM_Access_Token
 
 
 def push_notification(title, body, id_vendor):
@@ -10,7 +10,8 @@ def push_notification(title, body, id_vendor):
     token_query = db.session.query(
         FCM_Access_Token
     ).filter(
-        FCM_Access_Token.id_user == id_vendor
+        Users.id_user_hash == id_vendor,
+        FCM_Access_Token.id_user == Users.id_user
     )
 
     token_list = token_query.all()
