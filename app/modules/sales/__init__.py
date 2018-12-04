@@ -13,5 +13,5 @@ module.add_url_rule('/sales/getOrders',
                     view_func=getOrders, methods=['GET'])
 module.add_url_rule('/sales/getTasks',
                     view_func=getTasks, methods=['GET'])
-module.add_url_rule('/sales/removeTasks',
+module.add_url_rule('/sales/removeTask',
                     view_func=jobDone, methods=['POST'])
