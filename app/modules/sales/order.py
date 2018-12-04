@@ -142,11 +142,9 @@ def jobDone():
         try:
             status = db.session.query(
                 Tasks
-            ).join(
-                Users,
-                Tasks.id_user == Users.id_user
             ).filter(
                 Users.id_user_hash == hashed_vendor_id,
+                Tasks.id_user == Users.id_user,
                 Tasks.id_task == task_id
             ).delete(synchronize_session=False)
             db.session.commit()
