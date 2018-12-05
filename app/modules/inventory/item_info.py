@@ -40,6 +40,12 @@ def listItem(vendor_id=""):
         if not session.get('is_vendor', 0):
             return jsonify(data)
 
+    phone_no = db.session.query(
+        Users.phone_no
+    ).filter(
+        Users.id_user_hash == vendor_id
+    ).scalar()
+
     items = db.session.query(
         Items
     ).join(
@@ -59,5 +65,7 @@ def listItem(vendor_id=""):
                 'image_url': item.image_url
             }
             data['data'].append(temp)
+
+    data['phone_no'] = phone_no if phone_no else ""
 
     return jsonify(data)

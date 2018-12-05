@@ -20,6 +20,8 @@ class Users(db.Model, UserMixin):
     profile_img_url = db.Column(db.String(500), default='')
     id_user_hash = db.Column(db.String(255), unique=True, default='')
     is_vendor = db.Column(TINYINT(1), default=0)
+    # TODO: Add unique=True for phone_number
+    phone_no = db.Column(db.String(20), default='')
     create_timestamp = db.Column(
         TIMESTAMP, default=datetime.utcnow().replace(microsecond=0))
 
