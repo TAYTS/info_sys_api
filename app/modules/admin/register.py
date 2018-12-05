@@ -12,6 +12,7 @@ import os
 from app.utils.img_resize import resizeImage
 from app.utils.upload_img import uploadImage
 from app.utils.str_to_img import str_to_img
+from app.utils.validate_phone_no import validate_phone
 
 
 def register():
@@ -19,10 +20,21 @@ def register():
     email = str(request.form.get('email', ''))
     username = str(request.form.get('username', ''))
     is_vendor = int(request.form.get('is_vendor', 0))
+    phone_no = str(request.form.get('phone_no', ''))
 
     # Return if any of the POST parameter is empty
     if not(password and email and username):
         return jsonify({'status': 0})
+
+    # If the person is vendor, phone number must exist
+    if is_vendor:
+        if phone_no:
+            # Validate the phone number
+            phone_no = validate_phone(phone_no)
+            if not(phone_no):
+                return jsonify({'status': -2})
+        else:
+            return jsonify({'status': 0})
 
     # Hash the username and email
     unhashed_username = 'email:' + email + ';' + 'username:' + username
@@ -53,6 +65,7 @@ def register():
             profile_img_url='',
             id_user_hash=hashed_username,
             is_vendor=is_vendor,
+            phone_no=phone_no,
             create_timestamp=timestamp
         )
 
