@@ -11,7 +11,7 @@ from app.utils.push_notificaiton import push_notification
 @login_required
 def submit_order():
     content = json.loads(request.data)
-    orders = content.get('orders', [])
+    orders = json.loads(content.get('orders', []))
     hashed_customer_id = str(session.get('id_user'))
     hashed_vendor_id = content.get('vendor_id', '')
     table_id = content.get('table_id', 0)
